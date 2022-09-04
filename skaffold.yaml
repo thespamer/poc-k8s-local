@@ -1,0 +1,50 @@
+apiVersion: skaffold/v2beta19
+kind: Config
+
+# requires: 
+requires:
+- path: ./apps/emoji-service/skaffold.yaml
+- path: ./apps/emoji-web/skaffold.yaml
+- path: ./apps/voting-service/skaffold.yaml
+
+# profiles: 
+profiles:
+  - name: profile-dev
+    activation:
+      - command: dev 
+    deploy:
+      helm:
+        releases:
+        - name: perestroika-dev
+          chartPath: deploy/helm/perestroika
+          skipBuildDependencies: true
+          artifactOverrides:
+            emojiService.image: emoji-service-dev
+            emojiWeb.image: emoji-web-dev
+            votingService.image: voting-service-dev
+          namespace: perestroika-dev
+          createNamespace: true
+  # Production:
+  - name: profile-prod
+    activation:
+      - command: run
+    build:
+      artifacts:
+      - image: monorepo-base
+        context: .
+        docker:
+          dockerfile: Dockerfile.base
+    deploy:
+      helm:
+        releases:
+        - name: perestroika-prod
+          chartPath: deploy/helm/perestroika
+          skipBuildDependencies: true
+          setValues:
+            votingService.migrations.enabled: true
+          artifactOverrides:
+            emojiService.image: emoji-service
+            emojiWeb.image: emoji-web
+            votingService.image: voting-service
+          namespace: perestroika-prod
+          createNamespace: true

@@ -1,0 +1,23 @@
+# Build
+ARG MONOREPO_BASE
+FROM $MONOREPO_BASE as builder
+
+ARG APP_NAME=voting-service
+
+RUN yarn build ${APP_NAME}
+
+FROM node:16-alpine
+
+ARG APP_NAME=voting-service
+
+ENV NODE_ENV=production
+
+ENV MIKRO_ORM_CLI=apps/${APP_NAME}/mikro-orm.config.js
+
+WORKDIR /opt/bitcapital/
+
+COPY --from=builder /opt/bitcapital/node_modules ./node_modules
+
+COPY --from=builder /opt/bitcapital/dist/apps/${APP_NAME} .
+
+ENTRYPOINT ["node", "apps/voting-service/src/main.js"]

@@ -1,0 +1,46 @@
+{{- if .Values.votingService.migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: voting-service-migration
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "post-install, post-upgrade"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "perestroika.selectorLabels" . | nindent 8 }}-voting-service-migration
+    spec:
+      restartPolicy: "Never"
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+      {{- end }}
+      serviceAccountName: {{ include "perestroika.serviceAccountName" . }}
+      initContainers:
+      {{- include "postgresqlCheck.pod" . | indent 6 -}}
+      containers:
+        - name: migration-job
+          image: {{ .Values.votingService.image }}
+          imagePullPolicy: {{ .Values.votingService.imageConfig.pullPolicy }}
+          command: ["sh", "-c", "./node_modules/@mikro-orm/cli/cli.js migration:up"]
+          env:
+          {{- $secret_name := "voting-service-secrets" }}
+          {{- range $name, $value := .Values.votingService.env.secret }}
+          {{- if not (empty $value) }}
+          {{- if ne $name "GOOGLE_CREDENTIALS_JSON" }}
+            - name: {{ $name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret_name }}
+                  key: {{ $name | quote }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: voting-service-config    
+{{- end }}

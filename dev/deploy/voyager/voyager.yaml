@@ -1,0 +1,9 @@
+# cloudProvider -- Name of cloud provider
+cloudProvider: "metallb"
+
+# logLevel -- Log level for operator
+logLevel: 4
+
+apiserver:
+  # If true, validating webhook is configured for Voyager CRDss
+  enableValidatingWebhook: true

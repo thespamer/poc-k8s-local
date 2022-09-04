@@ -1,0 +1,11 @@
+{{- if .Values.kong.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kong-provisioning
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }} 
+data:
+  script.sh: |-
+    {{- .Files.Get "files/kong/script.sh" | indent 4 }}
+{{- end }}

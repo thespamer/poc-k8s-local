@@ -1,0 +1,10 @@
+{{ if .Values.postgresql.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgresql-db-init
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }} 
+data:
+{{ (.Files.Glob "files/postgresql/db-init.sql").AsConfig | indent 2 }}
+{{- end }}

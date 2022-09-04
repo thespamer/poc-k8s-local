@@ -1,0 +1,38 @@
+apiVersion: skaffold/v2beta19
+kind: Config
+
+# profiles: 
+profiles:
+  - name: profile-dev
+    activation:
+      - command: dev
+    build:
+      artifacts:
+      - image: emoji-web-dev
+        context: ../../
+        docker:
+          dockerfile: apps/emoji-web/Dockerfile.dev
+          buildArgs:
+            SCRIPT: start:debug
+        sync:
+          manual:
+          # Sync all the TypeScript files that are in the apps folder
+          - src: 'apps/**/*.ts'
+            dest: .
+          # Sync all the TypeScript files that are in the libs folder
+          - src: 'libs/**/*.ts'
+            dest: .
+  # Production:
+  - name: profile-prod
+    activation:
+      - command: run
+    build:
+      artifacts:
+      - image: emoji-web
+        context: .
+        requires:
+        - image: monorepo-base
+          alias: MONOREPO_BASE
+        docker:
+          dockerfile: Dockerfile.prod
+    

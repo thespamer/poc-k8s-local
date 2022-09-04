@@ -1,0 +1,19 @@
+ARG MONOREPO_BASE
+FROM $MONOREPO_BASE as builder
+
+ARG APP_NAME=emoji-web
+
+RUN yarn build ${APP_NAME}
+
+FROM node:16-alpine
+
+ENV NODE_ENV=production
+ARG APP_NAME=emoji-web
+
+WORKDIR /opt/bitcapital/app
+
+COPY --from=builder /opt/bitcapital/node_modules ./node_modules
+COPY --from=builder /opt/bitcapital/dist/apps/${APP_NAME} .
+
+ENTRYPOINT ["node", "apps/emoji-web/src/main.js"]
+

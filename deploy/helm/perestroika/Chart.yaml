@@ -1,0 +1,53 @@
+# The chart API version
+apiVersion: v2
+
+#  The name of the chart
+name: perestroika
+
+# Description chart
+description: Helm chart of the perestroika platform
+
+# Type Application
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 1.0.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.0.0"
+
+# A URL to an SVG or PNG image to be used as an icon
+icon: https://avatars1.githubusercontent.com/u/15859888?s=400&v=4
+
+# The maintainers the project
+maintainers:
+  - email: tech@bitcapital.com.br
+    name: Tech
+
+# Configure Dependencies
+dependencies:
+
+- name: "postgresql"
+  version: "10.4.3"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: postgresql.enabled
+
+- name: "rabbitmq"
+  version: "8.15.0"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: rabbitmq.enabled
+
+- name: "redis"
+  version: "10.5.7"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: redis.enabled
+
+- name: "kong"
+  version: "3.8.1"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: kong.enabled

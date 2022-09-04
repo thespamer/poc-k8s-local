@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+deploy
+dev
+docs
+README.md 
+skaffold.yaml
+Dockerfile.base

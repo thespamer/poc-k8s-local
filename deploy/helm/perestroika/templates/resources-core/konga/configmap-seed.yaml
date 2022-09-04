@@ -1,0 +1,32 @@
+{{- if .Values.konga.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  konga-seed
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+data:
+  userdb.data: |-
+    module.exports = [
+        {
+            "username": "{{ .Values.konga.config.konga_admin_user }}",
+            "email": "{{ .Values.konga.config.konga_admin_email }}",
+            "firstName": "Admin",
+            "lastName": "Administrator",
+            "node_id": "http://kong:8001",
+            "admin": true,
+            "active" : true,
+            "password": "{{ .Values.konga.config.konga_admin_password }}"
+        }
+    ]
+  kong_node.data: |-
+    module.exports = [
+      {
+          "name": "kong",
+          "type": "default",
+          "kong_admin_url": "http://kong:8001",
+          "health_checks": true,
+      }
+    ]
+    
+{{- end }}

@@ -1,0 +1,24 @@
+{{- if and (.Values.votingService.enabled) (.Values.votingService.resources) }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: voting-service
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta2
+    kind: Deployment
+    name: voting-service
+  minReplicas: {{ .Values.votingService.hpa.replicas.min }}
+  maxReplicas: {{ .Values.votingService.hpa.replicas.max }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: {{ .Values.votingService.hpa.resources.cpuAverage }}
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: {{ .Values.votingService.hpa.resources.memoryAverage }}
+{{- end }}

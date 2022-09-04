@@ -1,0 +1,33 @@
+global:
+  enabled: true
+  name: consul
+  datacenter: dc1
+  metrics:
+    enabled: true
+    enableAgentMetrics: true
+    agentMetricsRetentionTime: '1m'
+
+server:
+  replicas: 1
+
+ui:
+  enabled: true
+  metrics:
+    enabled: true # by default, this inherits from the value global.metrics.enabled
+    provider: "prometheus"
+    baseURL: http://prometheus-operated.kube-prometheus-stack:9090
+
+connectInject:
+  enabled: true
+  default: false
+  logLevel: debug
+  k8sAllowNamespaces: ["*"]
+  k8sDenyNamespaces: ["kube-public", "kube-system", "kube-node-lease", "voyager"]
+
+controller:
+  enabled: true
+
+prometheus:
+  enabled: false
+grafana:
+  enabled: false

@@ -1,0 +1,17 @@
+{{- if and (.Values.emojiService.enabled) (.Values.emojiService.service.enabled) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: emoji-service
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.emojiService.service.type }}
+  ports:
+    - port: {{ .Values.emojiService.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "perestroika.selectorLabels" . | nindent 4 }}-emoji-service
+{{- end }}

@@ -1,0 +1,446 @@
+# Default values for boleto-provider.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Global Docker registry secret names as an array
+imagePullSecrets: {}
+  # name: gcr-auth
+# String to partially override boleto-provider.fullname template with a string (will prepend the release name)
+nameOverride: ""
+# -- String to fully override boleto-provider.fullname template with a string
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+imageScript:
+  # -- Docker image used for general tasks
+  repository: bitcapital/k8s-exec
+  # -- Docker image tag used for general tasks
+  tag: latest
+  # Imahe pull Policy
+  imagePullPolicy: IfNotPresent
+
+postgresql:
+  # -- Enable postgres core
+  enabled: true
+  # -- String to fully override common.names.fullname template with a string
+  fullnameOverride: postgresql
+  # -- PostgreSQL user password
+  postgresqlPassword: bitcapital
+  # -- PostgreSQL database
+  postgresqlDatabase: postgres
+  service:
+    # -- Kubernetes Service type
+    type: ClusterIP
+    # -- PostgreSQL port
+    port: 5432
+  # -- ConfigMap with the initdb scripts
+  initdbScriptsConfigMap: postgresql-db-init
+  persistence:
+    # -- PVC Storage Request for PostgreSQL volume
+    size: 20Gi
+  metrics:
+    # -- Start a prometheus exporter
+    enabled: false
+    serviceMonitor:
+      # -- Set this to true to create ServiceMonitor for Prometheus operator
+      enabled: false
+      # -- Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+      additionalLabels:
+        release: <release prometheus-operator>
+        
+rabbitmq:
+  # -- Enabled rabbitmq
+  enabled: false
+  # -- String to fully override common.names.fullname template with a string
+  fullnameOverride: rabbitmq
+  auth:
+    # -- RabbitMQ application username
+    username: admin
+    # -- RabbitMQ application password
+    password: bitcapital
+    # -- Erlang cookie
+    erlangCookie: ps8tWlJwcqVrz3LqvnwrEw==
+  # -- Extra plugins to enable (single string containing a space-separated list)
+  extraPlugins: rabbitmq_prometheus
+  # -- Number of RabbitMQ nodes
+  replicaCount: 1
+  service:
+    # -- Amqp port
+    port: 5672
+    # -- Amqp TLS port
+    tlsPort: 5671
+    # -- RabbitMQ Manager port
+    managerPort: 15672
+    # -- RabbitMQ Manager service port name
+    managerPortName: http-stats
+    internalLoadBalancer:
+      # Enabled internal LoadBalancer
+      enabled: true
+  metrics:
+    # -- Enable exposing RabbitMQ metrics to be gathered by Prometheus
+    enabled: false
+    serviceMonitor:
+      # -- Set this to true to create ServiceMonitor for Prometheus operator
+      enabled: false
+      # -- Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+      additionalLabels:
+        release: <release prometheus-operator>
+
+redis:
+  # -- Enabled rabbitmq
+  enabled: false
+  # -- String to fully override common.names.fullname template with a string
+  fullnameOverride: redis
+  # -- Redis(TM) architecture. Allowed values: standalone or replication
+  architecture: replication
+  # --  Disable password redis
+  usePassword: false
+  auth:
+    # -- Enable password authentication
+    enabled: false
+    # -- Enable password authentication on sentinels too
+    sentinel: false
+    # -- Redis(TM) password
+    #password: bitcapital
+  # -- String to fully override common.names.fullname template with a string
+  replica:
+    # -- Number of Redis(TM) replicas to deploy
+    replicaCount: 1
+  metrics:
+    # -- Enable exposing RabbitMQ metrics to be gathered by Prometheus
+    enabled: false
+    serviceMonitor:
+      # -- Set this to true to create ServiceMonitor for Prometheus operator
+      enabled: false
+      # -- Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+      additionalLabels:
+        release: <release prometheus-operator>
+
+kong:
+  # -- Enable kong api gateway
+  enabled: false
+  global:
+    # -- Global Docker registry secret names as an array
+    imagePullSecrets: []
+  # -- Number of replicas of the kong Pod
+  replicaCount: 1
+  # -- String to fully override kong.fullname template with a string
+  fullnameOverride: kong
+  #image:
+  #  # -- kong image registry
+  #  registry: <Custom-Image>
+  #  # -- kong image name
+  #  repository: kong-custom
+  #  # -- kong image tag
+  #  tag: latest
+  #  # -- kong image pull policy
+  #  pullPolicy: Always
+  service:
+    # -- Add the Kong Admin ports to the service
+    exposeAdmin: true
+    # -- kong proxy HTTP service port port
+    proxyHttpPort: 80
+    # -- kong admin HTTP service port (only if service.exposeAdmin=true)
+    adminHttpPort: 8001
+  ingressController:
+    # -- Enable/disable the Kong Ingress Controller
+    enabled: false
+  postgresql:
+    # -- Deploy the PostgreSQL sub-chart
+    enabled: false
+    external:
+      # -- Host of an external PostgreSQL installation
+      host: postgresql
+      # -- Username of the external PostgreSQL installation
+      user: kong
+      # -- Password of the external PostgreSQL installation
+      password: kong
+  #kong:
+    # -- Array containing extra env vars to configure Kong
+  #  extraEnvVars:
+  #    - name: KONG_LOG_LEVEL
+  #      value: debug
+  #    - name: KONG_PLUGINS
+  #      value: bundled,oidc
+  ingress:
+    # -- Enable ingress controller resource
+    enabled: false
+  metrics:
+    # -- Enable exposing Kong metrics to be gathered by Prometheus
+    enabled: true
+    serviceMonitor:
+      # -- Set this to true to create ServiceMonitor for Prometheus operator
+      enabled: false
+      # -- Additional labels that can be used so ServiceMonitor will be discovered by Prometheus
+      additionalLabels:
+        release: <release prometheus-operator>
+  
+
+# Konga Configuration
+konga:
+  # -- Enable konga
+  enabled: false
+  # -- Replica count
+  replicaCount: 1
+  image:
+    repository: pantsel/konga
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 1337
+  # Konga default configuration
+  config: 
+    port: 1337
+    node_env: development
+    konga_hook_timeout: 60000
+    db_adapter: postgres
+    db_host: postgresql
+    db_port: 5432
+    db_user: konga
+    db_password: konga
+    db_database: konga
+    log_level: debug
+    konga_admin_user: admin
+    konga_admin_password: bitcapital
+    konga_admin_email: admin-konga@bitcapital.com.br
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+gcp:
+  secret:
+    ## -- Flag for the GCP service account
+    enabled: false
+    # --  Name of the secret that contains the encoded json.
+    ## Create secret: kubectl create secret generic google-application-credentials --from-file=credentials.json="<MY-CREDENTIALS>.json" -n <NAMESPACE>
+    name: google-application-credentials
+    # -- Secret key that holds the json value.
+    key: credentials.json
+
+emojiService:
+  # -- Enabled emojiService
+  enabled: true
+
+  # -- Replica count
+  replicaCount: 1
+
+  imageConfig:
+    # -- Pull Policy for use pull image
+    pullPolicy: IfNotPresent
+
+  service:
+    # -- Enabled service
+    enabled: true
+    # -- Service type
+    type: ClusterIP
+    # -- Port number
+    port: 80
+    internalLoadBalancer:
+      # Enabled internal LoadBalancer
+      enabled: false
+
+  resources: {}
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    #limits:
+    #  cpu: 100m
+    #  memory: 300Mi
+    #requests:
+    #  cpu: 100m
+    #  memory: 300Mi
+
+  # site.nodeSelector -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  nodeSelector: {}
+
+  # site.tolerations -- Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
+  # site.affinity -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  affinity: {}
+
+  # -- Add Pod Annotations
+  podAnnotations:
+    #'consul.hashicorp.com/connect-inject': 'true'
+    linkerd.io/inject: enabled
+
+  hpa:
+    replicas:
+      # -- Minimal size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      min: 1
+      # -- Maximun size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      max: 6
+    resources:
+      # -- CPU mean to activate hpa (%)
+      cpuAverage: 80
+      # -- Memory mean to activate hpa (%)
+      memoryAverage: 80
+
+  # Setting environment variables
+  env:
+    open:
+    secret:
+
+emojiWeb:
+  # -- Enabled emojiWeb
+  enabled: true
+    
+  # -- Replica count
+  replicaCount: 1
+
+  imageConfig:
+    # -- Pull Policy for use pull image
+    pullPolicy: IfNotPresent
+
+  service:
+    # -- Enabled service
+    enabled: true
+    # -- Service type
+    type: ClusterIP
+    # -- Port number
+    port: 80
+    internalLoadBalancer:
+      # Enabled internal LoadBalancer
+      enabled: false
+
+  resources: {}
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    #limits:
+    #  cpu: 100m
+    #  memory: 300Mi
+    #requests:
+    #  cpu: 100m
+    #  memory: 300Mi
+
+  # site.nodeSelector -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  nodeSelector: {}
+
+  # site.tolerations -- Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
+  # site.affinity -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  affinity: {}
+
+  # -- Add Pod Annotations
+  podAnnotations:
+    #'consul.hashicorp.com/connect-inject': 'true'
+    linkerd.io/inject: enabled
+
+  hpa:
+    replicas:
+      # -- Minimal size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      min: 1
+      # -- Maximun size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      max: 6
+    resources:
+      # -- CPU mean to activate hpa (%)
+      cpuAverage: 80
+      # -- Memory mean to activate hpa (%)
+      memoryAverage: 80
+
+  # Setting environment variables
+  env:
+    open:
+      EMOJI_SERVICE_BASE_URL: http://emoji-service:3000
+      VOTING_SERVICE_BASE_URL: http://voting-service:3000
+    secret:
+      #GOOGLE_CREDENTIALS_JSON:
+
+votingService:
+  # -- Enabled votingService
+  enabled: true
+
+  migrations:
+    # - Enabled migration hook
+    enabled: false
+    
+  # -- Replica count
+  replicaCount: 1
+
+  imageConfig:
+    # -- Pull Policy for use pull image
+    pullPolicy: IfNotPresent
+
+  service:
+    # -- Enabled service
+    enabled: true
+    # -- Service type
+    type: ClusterIP
+    # -- Port number
+    port: 80
+    internalLoadBalancer:
+      # Enabled internal LoadBalancer
+      enabled: false
+
+  resources: {}
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    #limits:
+    #  cpu: 100m
+    #  memory: 300Mi
+    #requests:
+    #  cpu: 100m
+    #  memory: 300Mi
+
+  # site.nodeSelector -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  nodeSelector: {}
+
+  # site.tolerations -- Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
+  # site.affinity -- Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  affinity: {}
+
+  # -- Add Pod Annotations
+  podAnnotations:
+    #'consul.hashicorp.com/connect-inject': 'true'
+    linkerd.io/inject: enabled
+
+  hpa:
+    replicas:
+      # -- Minimal size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      min: 1
+      # -- Maximun size pod to use [hpa](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+      max: 6
+    resources:
+      # -- CPU mean to activate hpa (%)
+      cpuAverage: 80
+      # -- Memory mean to activate hpa (%)
+      memoryAverage: 80
+
+  # Setting environment variables
+  env:
+    open:
+      EMOJI_SERVICE_BASE_URL: http://emoji-service:3000
+      DATABASE_HOST: postgresql
+      DATABASE_PORT: 5432
+      DATABASE_NAME: voting_svc_database
+    secret:
+      DATABASE_USER: voting_svc
+      DATABASE_PASSWORD: bitcapital

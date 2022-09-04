@@ -1,0 +1,24 @@
+{{- if and (.Values.emojiService.enabled) (.Values.emojiService.resources) }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: emoji-service
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta2
+    kind: Deployment
+    name: emoji-service
+  minReplicas: {{ .Values.emojiService.hpa.replicas.min }}
+  maxReplicas: {{ .Values.emojiService.hpa.replicas.max }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: {{ .Values.emojiService.hpa.resources.cpuAverage }}
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: {{ .Values.emojiService.hpa.resources.memoryAverage }}
+{{- end }}

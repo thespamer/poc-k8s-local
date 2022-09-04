@@ -1,0 +1,49 @@
+apiVersion: voyager.appscode.com/v1beta1
+kind: Ingress
+metadata:
+  name: kind-ingress
+  namespace: voyager
+spec:
+
+  rules:
+
+  ## Example HTTP
+  #- host: '*'
+  #  http:
+  #    port: '<IP-PUBLIC>'
+  #    paths:
+  #    - backend:
+  #        serviceName: '<SERVICE-NAME>'
+  #        servicePort: '<PRIVATE-IP>'
+
+  ## Example TCP
+  #- host: '*'
+  #  tcp:
+  #    port: '<IP-PUBLIC>'
+  #    backend:
+  #      serviceName: '<SERVICE-NAME>'
+  #      servicePort: '<PRIVATE-IP>'
+
+  - host: '*'
+    http:
+      port: '3000'
+      paths:
+      - backend:
+          serviceName: 'kube-prometheus-stack-grafana.kube-prometheus-stack'
+          servicePort: '80'
+
+  - host: '*'
+    http:
+      port: '9090'
+      paths:
+      - backend:
+          serviceName:  'prometheus-operated.kube-prometheus-stack'
+          servicePort: '9090'
+
+  - host: '*'
+    http:
+      port: '9093'
+      paths:
+      - backend:
+          serviceName: 'alertmanager-operated.kube-prometheus-stack'
+          servicePort: '9093'

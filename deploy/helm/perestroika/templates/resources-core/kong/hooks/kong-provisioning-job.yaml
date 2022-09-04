@@ -1,0 +1,52 @@
+{{- if .Values.kong.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-provisioning
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }} 
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "perestroika.labels" . | nindent 8 }}-kong
+    spec:
+      restartPolicy: Never
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+    {{- end }}
+      initContainers:
+      {{- include "kongCheck.pod" . | indent 6 -}}
+      containers:
+        - name: kong-bootstrap
+          image: "{{ .Values.imageScript.repository }}:{{ .Values.imageScript.tag }}"
+          imagePullPolicy: {{ .Values.imageScript.imagePullPolicy }}
+          command: ["/bin/sh"]
+          args:
+            - "-c"
+            - |
+              # Create path
+              mkdir -p /opt/bitcapital/
+              # Copy script to path
+              cp -f /mnt/config-map/script.sh /opt/bitcapital/script.sh
+              # Set Permission
+              chmod 700 /opt/bitcapital/script.sh
+              # Execute script
+              /opt/bitcapital/script.sh
+          env:
+            - name: KONG_ADMIN_HOST
+              value: kong
+            - name: KONG_ADMIN_PORT
+              value: {{ .Values.kong.service.adminHttpPort | quote }}
+          volumeMounts:
+          - name: script
+            mountPath: /mnt/config-map
+      volumes:
+      - name: script
+        configMap:
+          name: kong-provisioning
+{{- end }}

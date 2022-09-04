@@ -1,0 +1,72 @@
+{{- if .Values.konga.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: konga
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.konga.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "perestroika.selectorLabels" . | nindent 6 }}-konga
+  template:
+    metadata:
+      labels:
+        {{- include "perestroika.selectorLabels" . | nindent 8 }}-konga
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/resources-core/konga/configmap.yaml") . | sha256sum }}
+        checksum/configSeed: {{ include (print $.Template.BasePath "/resources-core/konga/configmap-seed.yaml") . | sha256sum }}
+    spec:
+      volumes:
+{{- if .Values.konga.extraVolumes }}
+{{ toYaml .Values.konga.extraVolumes | indent 8 }}
+{{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.konga.image.repository }}:{{ .Values.konga.image.tag }}"
+          imagePullPolicy: {{ .Values.konga.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 1337
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          envFrom:
+            - configMapRef:
+                name: konga-config
+          resources:
+            {{- toYaml .Values.konga.resources | nindent 12 }}
+          volumeMounts:
+          - name: seed-users
+            mountPath: /data/userdb.data
+            subPath: userdb.data
+          - name: node-seed
+            mountPath: /data/kong_node.data
+            subPath: kong_node.data
+      {{- with .Values.konga.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.konga.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.konga.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: seed-users
+          configMap:
+            name: konga-seed
+        - name: node-seed
+          configMap:
+            name: konga-seed
+{{- end }}

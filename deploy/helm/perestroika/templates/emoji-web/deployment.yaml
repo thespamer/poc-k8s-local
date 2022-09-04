@@ -1,0 +1,100 @@
+{{- if .Values.emojiWeb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emoji-web
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.emojiWeb.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "perestroika.selectorLabels" . | nindent 6 }}-emoji-web
+  template:
+    metadata:
+      labels:
+        {{- include "perestroika.selectorLabels" . | nindent 8 }}-emoji-web
+      annotations:
+      {{- with .Values.emojiWeb.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+        checksum/config: {{ include (print $.Template.BasePath "/emoji-web/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/emoji-web/secrets.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.emojiWeb.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.emojiWeb.imagePullSecrets.name }}
+      {{- end }}
+      serviceAccountName: {{ include "perestroika.serviceAccountName" . }}
+      containers:
+        - name: emoji-web
+          image: {{ .Values.emojiWeb.image }}
+          imagePullPolicy: {{ .Values.emojiWeb.imageConfig.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3333
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          env:
+          {{- if .Values.gcp.secret.enabled }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/etc/secrets/google/credentials.json"
+          {{- end }}
+          {{- $secret_name := "emoji-web-secrets" }}
+          {{- range $name, $value := .Values.emojiWeb.env.secret }}
+          {{- if not (empty $value) }}
+          {{- if ne $name "GOOGLE_CREDENTIALS_JSON" }}
+            - name: {{ $name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret_name }}
+                  key: {{ $name | quote }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: emoji-web-config
+          volumeMounts:
+            {{- if .Values.gcp.secret.enabled }}
+            - name: gcs-application-credentials
+              mountPath: /etc/secrets/google
+            {{- end }}
+          resources:
+            {{- toYaml .Values.emojiWeb.resources | nindent 12 }}
+      {{- with .Values.emojiWeb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.emojiWeb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.emojiWeb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        {{- if .Values.gcp.secret.enabled }}
+        - name: gcs-application-credentials
+          secret:
+        {{- if .Values.emojiWeb.env.secret.GOOGLE_CREDENTIALS_JSON }}
+            secretName: emoji-web-secrets
+            items:
+            - key: GOOGLE_CREDENTIALS_JSON 
+              path: credentials.json
+        {{- else }}
+            secretName: {{ .Values.gcp.secret.name }}
+            items:
+            - key: {{ .Values.gcp.secret.key }}
+              path: credentials.json
+        {{- end }}
+        {{- end }}
+{{- end }}

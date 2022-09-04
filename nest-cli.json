@@ -1,0 +1,69 @@
+{
+  "collection": "@nestjs/schematics",
+  "monorepo": true,
+  "root": "apps/voting-service",
+  "sourceRoot": "apps/voting-service/src",
+  "compilerOptions": {
+    "webpack": false,
+    "tsConfigPath": "tsconfig.json"
+  },
+  "projects": {
+    "emoji-service": {
+      "type": "application",
+      "root": "apps/emoji-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/emoji-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/emoji-service/tsconfig.app.json"
+      }
+    },
+    "emojis": {
+      "type": "library",
+      "root": "libs/emojis",
+      "entryFile": "index",
+      "sourceRoot": "libs/emojis/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/emojis/tsconfig.lib.json"
+      }
+    },
+    "emoji-svc-sdk": {
+      "type": "library",
+      "root": "libs/emoji-svc-sdk",
+      "entryFile": "index",
+      "sourceRoot": "libs/emoji-svc-sdk/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/emoji-svc-sdk/tsconfig.lib.json"
+      }
+    },
+    "voting-svc-sdk": {
+      "type": "library",
+      "root": "libs/voting-svc-sdk",
+      "entryFile": "index",
+      "sourceRoot": "libs/voting-svc-sdk/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/voting-svc-sdk/tsconfig.lib.json"
+      }
+    },
+    "emoji-web": {
+      "type": "application",
+      "root": "apps/emoji-web",
+      "entryFile": "main",
+      "sourceRoot": "apps/emoji-web/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/emoji-web/tsconfig.app.json"
+      }
+    },
+    "voting-service": {
+      "type": "application",
+      "root": "apps/voting-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/voting-service/src",
+      "mikro-orm": {
+        "useTsNode": true
+      },
+      "compilerOptions": {
+        "tsConfigPath": "apps/voting-service/tsconfig.app.json"
+      }
+    }
+  }
+}

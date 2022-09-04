@@ -1,0 +1,12 @@
+{{- if .Values.emojiWeb.enabled}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  emoji-web-config
+  labels:
+    {{- include "perestroika.labels" . | nindent 4 }}
+data:
+{{- range $name, $value := .Values.emojiWeb.env.open }}
+  {{ $name }}: {{ $value | quote }}
+{{- end -}}
+{{- end }}
